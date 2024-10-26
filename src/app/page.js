@@ -75,14 +75,16 @@ export default function UploadPage() {
             name="video"
             className="w-full my-2"
             height="240"
+            key={videoUrl}
             preload="metadata"
+            controls
           >
             <source src={videoUrl} type="video/mp4" />
             Your browser does not support the video tag.
           </video>
           <label
             htmlFor="file"
-            className="bg-none underline text-xs text-black border-none outline-none"
+            className="bg-none underline text-xs` text-black border-none outline-none"
           >
             Click here to change video
           </label>{" "}

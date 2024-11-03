@@ -1,24 +1,11 @@
 "use client";
+
 import { useState } from "react";
-
-export default function UploadPage() {
+import { v4 as uuidv4 } from "uuid";
+const Merge = () => {
+  const [start, setStart] = useState("");
+  const [end, setEnd] = useState("");
   const [file, setFile] = useState(null);
-  const [videoUrl, setVideoUrl] = useState(null);
-
-  const [times, setTimes] = useState({
-    start: "",
-    end: "",
-  });
-
-  const handleInput = (event) => {
-    const value = event.target.value;
-    const name = event.target.name;
-
-    setTimes({
-      ...times,
-      [name]: value,
-    });
-  };
 
   const handleFileChange = (e) => {
     const url = URL.createObjectURL(e.target.files[0]);
@@ -27,38 +14,61 @@ export default function UploadPage() {
     setFile(e.target.files[0]);
   };
 
-  const handleSubmit = async (e) => {
+  const [timestamps, setTimestamps] = useState([]);
+
+  const handleAddTimeStamps = (e) => {
     e.preventDefault();
+    setTimestamps((prevItems) => [
+      ...prevItems,
+      {
+        id: uuidv4(),
+        start,
+        end,
+      },
+    ]);
+
+    setEnd("");
+    setStart("");
+  };
+
+  const handleRemoveTimestamps = (id) => {
+    setTimestamps((prevItems) => {
+      return prevItems.filter((item) => item.id !== id);
+    });
+  };
+
+  const handleMergeVideo = async (e) => {
     e.target.disabled = true;
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("start", times.start);
-    formData.append("end", times.end);
+    formData.append("timestamps", JSON.stringify(timestamps));
 
-    const response = await fetch("/api/trim", {
+    const response = await fetch("/api/split", {
       method: "POST",
       body: formData,
     });
 
     if (response.ok) {
-      const blob = await response.blob();
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-      link.download = file.name;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(downloadUrl);
+      //   const blob = await response.blob();
+      //   const downloadUrl = window.URL.createObjectURL(blob);
+      //   const link = document.createElement("a");
+      //   link.href = downloadUrl;
+      //   link.download = file.name;
+      //   document.body.appendChild(link);
+      //   link.click();
+      //   document.body.removeChild(link);
+      //   window.URL.revokeObjectURL(downloadUrl);
+      console.log("Done");
     } else {
       console.log("File upload failed");
     }
     e.target.disabled = false;
   };
 
+  const [videoUrl, setVideoUrl] = useState("");
   return (
     <div className="sm:w-1/3 w-full px-3 mx-auto flex flex-col ">
-      <h1 className="my-5">Upload a file</h1>
+      <h1 className="my-5">Split video</h1>
       {!videoUrl && (
         <label
           htmlFor="file"
@@ -98,32 +108,55 @@ export default function UploadPage() {
           type="file"
           onChange={handleFileChange}
         />
-        <div className="flex flex-row w-full space-x-1">
+        <div className="flex flex-row w-full space-x-1 my-1">
           <input
             className="border w-1/2 text-sm border-slate-400 text-black p-3 py-2 outline-none"
             type="text"
             name="start"
             id="start"
+            value={start}
+            onChange={(e) => setStart(e.target.value)}
             placeholder="HH:MM:SS"
-            onChange={handleInput}
           />
           <input
             type="text"
             name="end"
-            onChange={handleInput}
             id="end"
+            value={end}
+            onChange={(e) => setEnd(e.target.value)}
             placeholder="HH:MM:SS"
             className="w-1/2 text-sm border text-black p-3 py-2  outline-none border-slate-400"
           />
+          <button
+            onClick={handleAddTimeStamps}
+            className="bg-black text-white px-3"
+          >
+            +
+          </button>
         </div>
-        <div></div>
+        <div>
+          <p className="text-xs">Click to remove:</p>
+          <ul>
+            {timestamps.map(({ start, end, id }, index) => (
+              <li
+                onClick={() => handleRemoveTimestamps(id)}
+                className="block text-xs underline"
+                key={index}
+              >
+                {++index}. {start} - {end}
+              </li>
+            ))}
+          </ul>
+        </div>
         <button
-          onClick={handleSubmit}
           className=" bg-black text-white p-2 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed absolute bottom-6 max-w-full"
+          onClick={handleMergeVideo}
         >
           Save
         </button>
       </form>
     </div>
   );
-}
+};
+
+export default Merge;

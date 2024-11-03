@@ -1,24 +1,27 @@
 import { NextResponse } from "next/server";
 import { promises as fs } from "fs";
-import path from "path";
 import Ffmpeg from "fluent-ffmpeg";
-import { createFolder, timeDifference } from "@/utils/helpers";
+import { saveFile, timeDifference } from "@/utils/helpers";
+import { validateTime } from "@/utils/validations";
 
 export async function POST(req) {
   const data = await req.formData();
   const file = data.get("file");
   const start = data.get("start");
   const end = data.get("end");
-  //More validation is needed
+
+  if (!validateTime(start) && !validateTime(end)) {
+    return NextResponse.json(
+      { error: "Failed to validate the times" },
+      { status: 400 }
+    );
+  }
+
   if (!file) {
     return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
   }
-  //Create the uploads folder
-  const uploadDir = await createFolder("uploads");
-  //Write the file into the uploads dir
-  const filePath = path.join(uploadDir, file.name);
-  const arrayBuffer = await file.arrayBuffer();
-  await fs.writeFile(filePath, Buffer.from(arrayBuffer));
+  //Saves the file in the uploads folder
+  const filePath = await saveFile(file);
 
   //Calculate the time diff
   const duration = timeDifference(start, end);
@@ -29,7 +32,7 @@ export async function POST(req) {
       Ffmpeg(filePath)
         .setStartTime(start)
         .setDuration(duration)
-        .output("new.mp4")
+        .output("output.mp4")
         .on("end", async () => {
           console.log("Done processing...");
           resolve();
@@ -39,12 +42,13 @@ export async function POST(req) {
         })
         .run();
     });
+    // console.log(result);
     //At this point, the video would have successfully been processed, ready for download
-    const donwloadFile = await fs.readFile("new.mp4");
-    return new Response(donwloadFile, {
+    const downloadFile = await fs.readFile("output.mp4");
+    return new Response(downloadFile, {
       headers: {
-        "Content-Type": donwloadFile.type || "application/octet-stream",
-        "Content-Disposition": `attachment; filename="${donwloadFile.name}"`,
+        "Content-Type": downloadFile.type || "application/octet-stream",
+        "Content-Disposition": `attachment; filename="${downloadFile.name}"`,
       },
     });
   } catch (error) {

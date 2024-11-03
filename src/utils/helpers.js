@@ -1,3 +1,5 @@
+import { randomUUID } from "crypto";
+import Ffmpeg from "fluent-ffmpeg";
 import { promises as fs } from "fs";
 import path from "path";
 
@@ -27,4 +29,47 @@ export const createFolder = async (folderName) => {
   const uploadDir = path.join(process.cwd(), folderName);
   await fs.mkdir(uploadDir, { recursive: true });
   return uploadDir;
+};
+
+export const saveFile = async (file, folder) => {
+  try {
+    const uploadDir = await createFolder(folder);
+    const filePath = path.join(uploadDir, file.name);
+    const arrayBuffer = await file.arrayBuffer();
+    await fs.writeFile(filePath, Buffer.from(arrayBuffer));
+    return filePath;
+  } catch (error) {
+    console.log(error);
+    return null;
+  }
+};
+export const saveZip = async (file, folder) => {
+  try {
+    const uploadDir = await createFolder(folder);
+    const filePath = path.join(uploadDir, "tadima.zip");
+
+    // const arrayBuffer = await file.arrayBuffer();
+    await fs.writeFile(filePath, file);
+    return filePath;
+  } catch (error) {
+    console.log(error);
+    return null;
+  }
+};
+export const trimVideo = (filePath, startTime, duration) => {
+  const videoName = randomUUID() + ".mp4";
+  return new Promise((resolve, reject) => {
+    Ffmpeg(filePath)
+      .setStartTime(startTime)
+      .setDuration(duration)
+      .output(videoName)
+      .on("end", async () => {
+        console.log("Done processing...");
+        resolve(videoName);
+      })
+      .on("error", (err) => {
+        reject(new Error(err));
+      })
+      .run();
+  });
 };

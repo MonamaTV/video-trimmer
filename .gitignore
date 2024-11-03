@@ -13,6 +13,8 @@
 /.next/
 /out/
 /uploads
+/zip
+*.zip
 *.mp4
 
 # production

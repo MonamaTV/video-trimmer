@@ -49,16 +49,15 @@ const Merge = () => {
     });
 
     if (response.ok) {
-      //   const blob = await response.blob();
-      //   const downloadUrl = window.URL.createObjectURL(blob);
-      //   const link = document.createElement("a");
-      //   link.href = downloadUrl;
-      //   link.download = file.name;
-      //   document.body.appendChild(link);
-      //   link.click();
-      //   document.body.removeChild(link);
-      //   window.URL.revokeObjectURL(downloadUrl);
-      console.log("Done");
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = "trimmed-videos.zip";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
     } else {
       console.log("File upload failed");
     }

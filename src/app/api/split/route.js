@@ -36,8 +36,10 @@ export async function POST(req) {
     console.log(downloadFile);
     return new NextResponse(downloadFile, {
       headers: {
-        "Content-Type": "application/zip",
-        "Content-Disposition": "attachment; filename=tadima.zip",
+        headers: {
+          "Content-Type": "application/zip",
+          "Content-Disposition": `attachment; filename="${downloadFile.name}"`,
+        },
       },
     });
   } catch (error) {

@@ -20,20 +20,18 @@ export async function POST(req) {
       const duration = timeDifference(start, end);
       return trimVideo(filePath, start, duration);
     });
-    //Using a promise to process the video
+
     const results = await Promise.allSettled(promises);
     const zip = new JSZip();
     // console.log(results.);
     for (const video of results) {
       const file = await fs.readFile(video.value);
-      const fileName = path.basename(video.value); // Extract file name from path
-      zip.file(fileName, file); // Add file to zip
+      const fileName = path.basename(video.value);
+      zip.file(fileName, file);
     }
     const content = await zip.generateAsync({ type: "nodebuffer" });
     const saved = await saveZip(content, "zip");
-    // Write the zip file to the specified location
     const downloadFile = await fs.readFile(saved);
-    console.log(downloadFile);
     return new NextResponse(downloadFile, {
       headers: {
         headers: {
@@ -43,7 +41,6 @@ export async function POST(req) {
       },
     });
   } catch (error) {
-    console.log({ error });
     return NextResponse.json({
       message: "Video failed to process",
     });

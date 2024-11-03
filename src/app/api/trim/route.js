@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import Ffmpeg from "fluent-ffmpeg";
-import { saveFile, timeDifference } from "@/utils/helpers";
+import { saveFile, timeDifference, trimVideo } from "@/utils/helpers";
 import { validateTime } from "@/utils/validations";
 
 export async function POST(req) {
@@ -21,30 +21,16 @@ export async function POST(req) {
     return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
   }
   //Saves the file in the uploads folder
-  const filePath = await saveFile(file);
+  const filePath = await saveFile(file, "uploads");
 
   //Calculate the time diff
   const duration = timeDifference(start, end);
 
   try {
     //Using a promise to process the video
-    await new Promise((resolve, reject) => {
-      Ffmpeg(filePath)
-        .setStartTime(start)
-        .setDuration(duration)
-        .output("output.mp4")
-        .on("end", async () => {
-          console.log("Done processing...");
-          resolve();
-        })
-        .on("error", (err) => {
-          reject(new Error(err));
-        })
-        .run();
-    });
-    // console.log(result);
-    //At this point, the video would have successfully been processed, ready for download
-    const downloadFile = await fs.readFile("output.mp4");
+    const savedFile = await trimVideo(filePath, start, duration);
+
+    const downloadFile = await fs.readFile(savedFile);
     return new Response(downloadFile, {
       headers: {
         "Content-Type": downloadFile.type || "application/octet-stream",

@@ -18,7 +18,7 @@ export async function POST(req) {
   }
 
   if (!file) {
-    return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
+    return NextResponse.json({ error: "No files uploaded" }, { status: 400 });
   }
   //Saves the file in the uploads folder
   const filePath = await saveFile(file, "uploads");
